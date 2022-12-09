@@ -2,6 +2,7 @@ package openCV;
 
 import java.awt.FlowLayout;
 import java.awt.Image;
+import java.awt.Rectangle;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -46,28 +47,29 @@ public class FaceDetection1 {
 		CascadeClassifier cascadeEyeClassifier = new CascadeClassifier("haarcascades/haarcascade_eye.xml");
 
 		VideoCapture videoDevice = new VideoCapture();
-		videoDevice.open(0);
+		videoDevice.open(1);
 		if (videoDevice.isOpened()) {
 
 			while (true) {
-				Thread.sleep(50);
+//				Thread.sleep(50);
 				Mat frameCapture = new Mat();
 				videoDevice.read(frameCapture);
 
 				MatOfRect faces = new MatOfRect();
 				cascadeFaceClassifier.detectMultiScale(frameCapture, faces);
 
-				for (int i = 0; i < faces.toArray().length; i++) {
-					Rect rect = faces.toArray()[i];
-					Point facePoint = new Point(rect.x + rect.width, rect.y + rect.height);
-//					FacialPoint fPoint = new FacialPoint(rect);
-//					double area = rect.area();
-
-					Imgproc.putText(frameCapture, "Face", new Point(rect.x, rect.y - 5), 1, 2, new Scalar(0, 0, 255));
-					Imgproc.rectangle(frameCapture, new Point(rect.x, rect.y),
-							new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 100, 0), 3);
-
-				}
+//				for (int i = 0; i < faces.toArray().length; i++) {
+//					Rect rect = faces.toArray()[i];
+//					if(i>=1)break;
+//					Point facePoint = new Point(rect.x + rect.width, rect.y + rect.height);
+////					FacialPoint fPoint = new FacialPoint(rect);
+////					double area = rect.area();
+//
+//					Imgproc.putText(frameCapture, "Face", new Point(rect.x, rect.y - 5), 1, 2, new Scalar(0, 0, 255));
+//					Imgproc.rectangle(frameCapture, new Point(rect.x, rect.y),
+//							new Point(rect.x + rect.width, rect.y + rect.height), new Scalar(0, 100, 0), 3);
+//
+//				}
 
 				MatOfRect eyes = new MatOfRect();
 				cascadeEyeClassifier.detectMultiScale(frameCapture, eyes);
@@ -111,13 +113,25 @@ public class FaceDetection1 {
 					}
 				}
 //				System.out.println(yDiff);
-				if (yDiff > 15 || smallestDistance > 700) {
+				if (yDiff > 15 || smallestDistance > 800 || countEye < 2) {
 					System.out.println("YOU ARE NOT FOCUSED");
-				} 
+					Rect rect = new Rect(0, 400, 700, 100);
+					Scalar red = new Scalar(0, 0, 255);
+					Imgproc.rectangle(frameCapture, rect, red, -1);
+				} else {
+					Rect rect = new Rect(0, 400, 700, 100);
+					Scalar green = new Scalar(0, 255, 0);
+					Imgproc.rectangle(frameCapture, rect, green, -1);
+				}
 //				System.out.println(smallestDistance);
 				PushImage(ConvertMat2Image(frameCapture));
-				System.out.println(
-						String.format("%s FACES %s EYE detected.", faces.toArray().length, eyes.toArray().length));
+				if (eyes.toArray().length > 2) {
+					System.out.println(String.format("%s FACES %s EYE detected.", faces.toArray().length, 2));
+
+				} else {
+					System.out.println(
+							String.format("%s FACES %s EYE detected.", faces.toArray().length, eyes.toArray().length));
+				}
 			}
 		} else {
 			System.out.println("Video could not connect to the device.");
@@ -127,11 +141,11 @@ public class FaceDetection1 {
 
 	private static BufferedImage ConvertMat2Image(Mat cameraData) {
 
-		MatOfByte byteMatVerisi = new MatOfByte();
+		MatOfByte byteMatData = new MatOfByte();
 
-		Imgcodecs.imencode(".jpg", cameraData, byteMatVerisi);
+		Imgcodecs.imencode(".jpg", cameraData, byteMatData);
 
-		byte[] byteArray = byteMatVerisi.toArray();
+		byte[] byteArray = byteMatData.toArray();
 		BufferedImage image = null;
 		try {
 			InputStream in = new ByteArrayInputStream(byteArray);
@@ -146,7 +160,7 @@ public class FaceDetection1 {
 	public static void WindowPrepare() {
 		frame = new JFrame();
 		frame.setLayout(new FlowLayout());
-		frame.setSize(500, 500);
+		frame.setSize(600, 500);
 		frame.setVisible(true);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
